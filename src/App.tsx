@@ -9,14 +9,11 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Sites from "./pages/Sites";
 import Chemicals from "./pages/Chemicals";
 import Inspections from "./pages/Inspections";
 import NewInspection from "./pages/NewInspection";
 import InspectionDetail from "./pages/InspectionDetail";
-import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
-import Showcase from "./pages/Showcase";
 
 const queryClient = new QueryClient();
 
@@ -36,14 +33,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sites"
-              element={
-                <ProtectedRoute>
-                  <Sites />
                 </ProtectedRoute>
               }
             />
@@ -79,15 +68,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/showcase" element={<Showcase />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
