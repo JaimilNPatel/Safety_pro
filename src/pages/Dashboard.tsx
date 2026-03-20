@@ -19,7 +19,8 @@ import {
   Calendar,
   Loader2,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  Flame
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -262,7 +263,7 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <div>
               <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <Button variant="outline" asChild className="h-auto flex-col gap-2 p-6">
                   <Link to="/chemicals">
                     <Search className="h-6 w-6" />
@@ -285,6 +286,12 @@ export default function Dashboard() {
                   <Link to="/reports">
                     <FileText className="h-6 w-6" />
                     <span>Reports</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="h-auto flex-col gap-2 p-6 border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20">
+                  <Link to="/nh3">
+                    <Flame className="h-6 w-6 text-amber-600" />
+                    <span className="text-amber-700 dark:text-amber-300 font-semibold">NH₃ Safety</span>
                   </Link>
                 </Button>
               </div>

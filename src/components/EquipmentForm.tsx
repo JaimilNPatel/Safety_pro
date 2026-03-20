@@ -18,7 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Plus, Trash2, ChevronDown, Gauge, Wrench, AlertTriangle, Settings } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, Gauge, Wrench, AlertTriangle, Settings, Zap, FileText } from 'lucide-react';
 import { 
   type EquipmentData, 
   type ConditionResult,
@@ -26,6 +26,7 @@ import {
   getDefaultEquipmentData,
   getConditionColorClass 
 } from '@/lib/equipmentCondition';
+import { getEquipmentProfile, isFieldHidden } from '@/lib/equipmentProfiles';
 
 const EQUIPMENT_TYPES = [
   'Reactor',
@@ -164,15 +165,90 @@ export default function EquipmentForm({ equipment, onChange }: EquipmentFormProp
                   {/* Expanded Details */}
                   <CollapsibleContent>
                     <div className="border-t p-4">
+                      {/* Type-Specific Information Banner */}
+                      {equip.data.equipment_type && equip.data.equipment_type !== 'Other' && (() => {
+                        const profile = getEquipmentProfile(equip.data.equipment_type);
+                        return (
+                          <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4 dark:bg-blue-950 dark:border-blue-800">
+                            <div className="grid gap-6 md:grid-cols-2">
+                              {/* Failure Modes */}
+                              <div>
+                                <h5 className="flex items-center gap-2 font-semibold text-sm mb-2 text-blue-900 dark:text-blue-100">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  Common Failure Modes
+                                </h5>
+                                <ul className="space-y-1 ml-4">
+                                  {profile.failureModes.map((mode, i) => (
+                                    <li key={i} className="text-xs text-blue-800 dark:text-blue-200 list-disc">
+                                      {mode}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              
+                              {/* Inspection Focus */}
+                              <div>
+                                <h5 className="flex items-center gap-2 font-semibold text-sm mb-2 text-blue-900 dark:text-blue-100">
+                                  <Wrench className="h-4 w-4" />
+                                  Inspection Focus Areas
+                                </h5>
+                                <ul className="space-y-1 ml-4">
+                                  {profile.inspectionChecklist.map((item, i) => (
+                                    <li key={i} className="text-xs text-blue-800 dark:text-blue-200 list-disc">
+                                      {item}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                            
+                            {/* Type-Specific Scoring Weights */}
+                            <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                              <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Scoring Weights for {profile.label}:</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                <div className="text-center">
+                                  <div className="text-blue-600 dark:text-blue-400 font-semibold">
+                                    {Math.round(profile.scoringWeights.physical * 100)}%
+                                  </div>
+                                  <div className="text-blue-700 dark:text-blue-300">Physical</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-blue-600 dark:text-blue-400 font-semibold">
+                                    {Math.round(profile.scoringWeights.maintenance * 100)}%
+                                  </div>
+                                  <div className="text-blue-700 dark:text-blue-300">Maintenance</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-blue-600 dark:text-blue-400 font-semibold">
+                                    {Math.round(profile.scoringWeights.operational * 100)}%
+                                  </div>
+                                  <div className="text-blue-700 dark:text-blue-300">Operational</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-blue-600 dark:text-blue-400 font-semibold">
+                                    {Math.round(profile.scoringWeights.environment * 100)}%
+                                  </div>
+                                  <div className="text-blue-700 dark:text-blue-300">Environment</div>
+                                </div>
+                              </div>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                Expected service life: <span className="font-semibold">{profile.expectedLifeYears} years</span>
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      
                       <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Safety Limits Section */}
-                        <div className="space-y-4">
-                          <h4 className="flex items-center gap-2 font-semibold text-sm">
-                            <Gauge className="h-4 w-4 text-primary" />
-                            Safety Limits & Operating Conditions
-                          </h4>
-                          
-                          <div className="grid grid-cols-2 gap-3">
+                        {/* Safety Limits Section - Hidden for certain equipment types */}
+                        {!isFieldHidden(equip.data.equipment_type, 'safety_relief_setpoint_psi') && (
+                          <div className="space-y-4">
+                            <h4 className="flex items-center gap-2 font-semibold text-sm">
+                              <Gauge className="h-4 w-4 text-primary" />
+                              Safety Limits & Operating Conditions
+                            </h4>
+                            
+                            <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
                               <Label className="text-xs">Design Pressure (PSI)</Label>
                               <Input
@@ -240,38 +316,50 @@ export default function EquipmentForm({ equipment, onChange }: EquipmentFormProp
                               />
                             </div>
                           </div>
+                          </div>
+                        )}
 
-                          {/* Usage Metrics */}
-                          <h4 className="flex items-center gap-2 pt-2 font-semibold text-sm">
+                        {/* Usage Metrics Section */}
+                        <div className="space-y-4">
+                          <h4 className="flex items-center gap-2 font-semibold text-sm">
                             Usage Metrics
                           </h4>
                           <div className="grid grid-cols-3 gap-3">
+                            {!isFieldHidden(equip.data.equipment_type, 'capacity_utilization_percent') && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Capacity Used (%)</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={equip.data.capacity_utilization_percent}
+                                  onChange={(e) => updateEquipment(index, { 
+                                    capacity_utilization_percent: parseFloat(e.target.value) || 0 
+                                  })}
+                                />
+                              </div>
+                            )}
+                            {!isFieldHidden(equip.data.equipment_type, 'operating_hours_per_day') && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Hours/Day</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="24"
+                                  value={equip.data.operating_hours_per_day}
+                                  onChange={(e) => updateEquipment(index, { 
+                                    operating_hours_per_day: parseFloat(e.target.value) || 0 
+                                  })}
+                                />
+                              </div>
+                            )}
                             <div className="space-y-1">
-                              <Label className="text-xs">Capacity Used (%)</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={equip.data.capacity_utilization_percent}
-                                onChange={(e) => updateEquipment(index, { 
-                                  capacity_utilization_percent: parseFloat(e.target.value) || 0 
-                                })}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Hours/Day</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="24"
-                                value={equip.data.operating_hours_per_day}
-                                onChange={(e) => updateEquipment(index, { 
-                                  operating_hours_per_day: parseFloat(e.target.value) || 0 
-                                })}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Years in Service</Label>
+                              <Label className="text-xs">
+                                Years in Service {(() => {
+                                  const profile = getEquipmentProfile(equip.data.equipment_type);
+                                  return <span className="text-muted-foreground text-xs">(max: {profile.expectedLifeYears}y)</span>;
+                                })()}
+                              </Label>
                               <Input
                                 type="number"
                                 min="0"
@@ -487,6 +575,400 @@ export default function EquipmentForm({ equipment, onChange }: EquipmentFormProp
                             </div>
                           </div>
                         </div>
+
+                        {/* Equipment-Specific Assessment Fields */}
+                        {(() => {
+                          const type = equip.data.equipment_type;
+                          return (
+                            <>
+                              {/* Reactor-Specific Fields */}
+                              {type === 'Reactor' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Reactor Assessment - Wall Integrity & Thermal
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Wall Thickness Nominal (mm)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 15.0"
+                                        value={equip.data.wall_thickness_nominal_mm || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          wall_thickness_nominal_mm: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Measured (mm)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 13.5"
+                                        value={equip.data.wall_thickness_measured_mm || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          wall_thickness_measured_mm: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Min Required (mm)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 6.0"
+                                        value={equip.data.wall_thickness_min_required_mm || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          wall_thickness_min_required_mm: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Corrosion Rate (mm/yr)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 0.5"
+                                        value={equip.data.corrosion_rate_mm_per_year || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          corrosion_rate_mm_per_year: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-1">
+                                      <Label className="text-xs">Thermal Cycling</Label>
+                                      <Select
+                                        value={equip.data.thermal_cycling || 'None'}
+                                        onValueChange={(v) => updateEquipment(index, { 
+                                          thermal_cycling: v as 'None' | 'Rare' | 'Moderate' | 'Frequent'
+                                        })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="None">None</SelectItem>
+                                          <SelectItem value="Rare">Rare</SelectItem>
+                                          <SelectItem value="Moderate">Moderate</SelectItem>
+                                          <SelectItem value="Frequent">Frequent</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Distillation Column-Specific Fields */}
+                              {type === 'Distillation Column' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Distillation Column Assessment - Pressure Drop & Fouling
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Normal ΔP (mbar)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 200"
+                                        value={equip.data.column_normal_pressure_drop_mbar || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          column_normal_pressure_drop_mbar: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Current ΔP (mbar)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 240"
+                                        value={equip.data.column_current_pressure_drop_mbar || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          column_current_pressure_drop_mbar: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Fouling Level</Label>
+                                      <Select
+                                        value={equip.data.fouling_level || 'None'}
+                                        onValueChange={(v) => updateEquipment(index, { 
+                                          fouling_level: v as 'None' | 'Light' | 'Moderate' | 'Heavy'
+                                        })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="None">None</SelectItem>
+                                          <SelectItem value="Light">Light</SelectItem>
+                                          <SelectItem value="Moderate">Moderate</SelectItem>
+                                          <SelectItem value="Heavy">Heavy</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Heat Exchanger-Specific Fields */}
+                              {type === 'Heat Exchanger' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Heat Exchanger Assessment - Thermal Performance & Plugging
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Approach Temp Normal (°C)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 10"
+                                        value={equip.data.approach_temp_normal_c || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          approach_temp_normal_c: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Approach Temp Current (°C)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 15"
+                                        value={equip.data.approach_temp_current_c || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          approach_temp_current_c: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Tubes Plugged (#)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 5"
+                                        value={equip.data.tube_plugged_count || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          tube_plugged_count: parseInt(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Total Tubes (#)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 200"
+                                        value={equip.data.tube_total_count || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          tube_total_count: parseInt(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Storage Tank-Specific Fields */}
+                              {type === 'Storage Tank' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Storage Tank Assessment - Foundation & Corrosion
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Settlement (mm)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 10.5"
+                                        value={equip.data.settlement_mm || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          settlement_mm: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1 flex items-end">
+                                      <label className="flex items-center gap-2 text-sm">
+                                        <Checkbox
+                                          checked={equip.data.floor_plate_corrosion || false}
+                                          onCheckedChange={(c) => updateEquipment(index, { floor_plate_corrosion: !!c })}
+                                        />
+                                        Floor Plate Corrosion
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Pump-Specific Fields */}
+                              {type === 'Pump' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Pump Assessment - Vibration & Seal Condition
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Vibration Level (mm/s)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 5.0"
+                                        value={equip.data.vibration_level_mm_per_sec || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          vibration_level_mm_per_sec: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Normal: 0-2.5 | Elevated: 2.5-7 | High: 7-18 | Critical: &gt;18
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Seal Condition</Label>
+                                      <Select
+                                        value={equip.data.seal_condition || 'Good'}
+                                        onValueChange={(v) => updateEquipment(index, { 
+                                          seal_condition: v as 'Good' | 'Leaking' | 'Failed'
+                                        })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="Good">Good</SelectItem>
+                                          <SelectItem value="Leaking">Leaking</SelectItem>
+                                          <SelectItem value="Failed">Failed</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Compressor-Specific Fields */}
+                              {type === 'Compressor' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Compressor Assessment - Vibration & Lube Oil
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Vibration Level (mm/s)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 6.0"
+                                        value={equip.data.vibration_level_mm_per_sec || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          vibration_level_mm_per_sec: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Normal: 0-2.5 | Elevated: 2.5-7 | High: 7-18 | Critical: &gt;18
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Lube Oil Condition</Label>
+                                      <Select
+                                        value={equip.data.lube_oil_condition || 'Good'}
+                                        onValueChange={(v) => updateEquipment(index, { 
+                                          lube_oil_condition: v as 'Good' | 'Degraded' | 'Contaminated'
+                                        })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="Good">Good</SelectItem>
+                                          <SelectItem value="Degraded">Degraded</SelectItem>
+                                          <SelectItem value="Contaminated">Contaminated</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Control System-Specific Fields */}
+                              {type === 'Control System' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Control System Assessment - Firmware & Calibration
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Firmware Last Updated</Label>
+                                      <Input
+                                        type="date"
+                                        value={equip.data.firmware_last_updated_date || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          firmware_last_updated_date: e.target.value || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1 flex items-end">
+                                      <label className="flex items-center gap-2 text-sm">
+                                        <Checkbox
+                                          checked={equip.data.calibration_drift_detected || false}
+                                          onCheckedChange={(c) => updateEquipment(index, { calibration_drift_detected: !!c })}
+                                        />
+                                        Calibration Drift Detected
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Safety Valve-Specific Fields */}
+                              {type === 'Safety Valve' && (
+                                <div className="lg:col-span-2 space-y-4">
+                                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                                    <Gauge className="h-4 w-4 text-primary" />
+                                    Safety Valve Assessment - Pop Test & Set Pressure
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Last Pop Test Date</Label>
+                                      <Input
+                                        type="date"
+                                        value={equip.data.last_pop_test_date || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          last_pop_test_date: e.target.value || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Pop Test Result</Label>
+                                      <Select
+                                        value={equip.data.pop_test_result || 'Not tested'}
+                                        onValueChange={(v) => updateEquipment(index, { 
+                                          pop_test_result: v as 'Pass' | 'Fail' | 'Not tested'
+                                        })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="Pass">Pass</SelectItem>
+                                          <SelectItem value="Fail">Fail</SelectItem>
+                                          <SelectItem value="Not tested">Not tested</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Set Pressure Tolerance (%)</Label>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g., 1.5"
+                                        value={equip.data.set_pressure_tolerance_percent || ''}
+                                        onChange={(e) => updateEquipment(index, { 
+                                          set_pressure_tolerance_percent: parseFloat(e.target.value) || undefined 
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         {/* Notes */}
                         <div className="lg:col-span-2 space-y-2">

@@ -4,53 +4,12 @@
  * 1. Physical Condition - inherent state of equipment
  * 2. Criticality - importance to safety and operations
  * 3. Environment - operating conditions exposure
+ *
+ * Now supports equipment-type-specific scoring weights, failure modes,
+ * and assessment criteria.
  */
 
-export interface EquipmentData {
-  name: string;
-  equipment_type: string;
-  
-  // Safety Limits
-  design_pressure_psi?: number;
-  max_operating_pressure_psi?: number;
-  design_temperature_c?: number;
-  max_operating_temperature_c?: number;
-  safety_relief_setpoint_psi?: number;
-  
-  // Usage Metrics
-  current_operating_pressure_psi?: number;
-  current_operating_temperature_c?: number;
-  capacity_utilization_percent: number;
-  operating_hours_per_day: number;
-  years_in_service: number;
-  
-  // Maintenance Data
-  last_maintenance_date?: string;
-  maintenance_frequency_days: number;
-  last_inspection_date?: string;
-  inspection_frequency_days: number;
-  maintenance_compliance_percent: number;
-  outstanding_work_orders: number;
-  
-  // Physical Condition Assessment
-  physical_condition: 1 | 2 | 3;
-  has_visible_damage: boolean;
-  has_corrosion: boolean;
-  has_leaks: boolean;
-  
-  // Criticality Assessment
-  criticality_level: 1 | 2 | 3;
-  is_safety_critical: boolean;
-  redundancy_available: boolean;
-  
-  // Environment Assessment
-  environment_condition: 1 | 2 | 3;
-  exposed_to_corrosive: boolean;
-  exposed_to_vibration: boolean;
-  exposed_to_extreme_temp: boolean;
-  
-  notes?: string;
-}
+import { getEquipmentProfile, type EquipmentProfile, type EquipmentData } from './equipmentProfiles';
 
 export interface ConditionResult {
   overall_condition: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
@@ -78,23 +37,32 @@ function daysSinceDate(dateStr?: string, defaultDays = 999): number {
 /**
  * Calculate physical condition score (0-100)
  * Based on NFPA 70B physical assessment criteria
+ * Uses equipment-type-specific condition descriptors
  */
-function calculatePhysicalScore(data: EquipmentData): { score: number; issues: string[] } {
+function calculatePhysicalScore(data: EquipmentData, profile: EquipmentProfile): { score: number; issues: string[] } {
   let score = 100;
   const issues: string[] = [];
   
-  // Base physical condition (1=best, 3=worst)
+  // Base physical condition (1=best, 5=worst)
   switch (data.physical_condition) {
     case 1:
       // Like-new condition
       break;
     case 2:
-      score -= 25;
+      score -= 16;
       issues.push('Physical condition shows wear indicators');
       break;
     case 3:
-      score -= 50;
-      issues.push('Physical condition requires immediate attention');
+      score -= 35;
+      issues.push('Physical condition shows moderate degradation');
+      break;
+    case 4:
+      score -= 62;
+      issues.push('Physical condition shows significant issues');
+      break;
+    case 5:
+      score -= 88;
+      issues.push('Physical condition critical — immediate attention required');
       break;
   }
   
@@ -112,12 +80,14 @@ function calculatePhysicalScore(data: EquipmentData): { score: number; issues: s
     issues.push('Active leaks detected');
   }
   
-  // Age factor (deduct up to 10 points for older equipment)
-  if (data.years_in_service > 20) {
+  // Age factor using equipment-type-specific expected life
+  const expectedLife = profile.expectedLifeYears;
+  if (data.years_in_service > expectedLife) {
     score -= 10;
-    issues.push('Equipment age exceeds 20 years');
-  } else if (data.years_in_service > 10) {
+    issues.push(`Equipment age exceeds expected life of ${expectedLife} years`);
+  } else if (data.years_in_service > expectedLife * 0.75) {
     score -= 5;
+    issues.push('Equipment approaching end of expected service life');
   }
   
   return { score: Math.max(0, score), issues };
@@ -225,7 +195,79 @@ function calculateOperationalScore(data: EquipmentData): { score: number; issues
 }
 
 /**
+ * Apply type-specific checks from equipment profile
+ * These are additional deductions based on equipment type
+ */
+function applyTypeSpecificChecks(data: EquipmentData, profile: EquipmentProfile): { deductions: { [key: string]: number }; issues: string[] } {
+  const deductions: { [key: string]: number } = {};
+  const issues: string[] = [];
+  
+  for (const check of profile.typeSpecificChecks) {
+    let shouldApply = false;
+    
+    const fieldValue = data[check.field];
+    
+    switch (check.condition) {
+      case 'gt':
+        // Handle numeric comparisons with special logic for ratios, dates, and field-based thresholds
+        if (typeof fieldValue === 'number' && typeof check.threshold === 'number') {
+          // Check if it's a ratio check (decimal < 1 threshold) like approach temp or pressure drop
+          if ((check.field.includes('approach_temp') || check.field.includes('pressure_drop')) && check.threshold > 1 && check.threshold < 3) {
+            // It's a multiplier/ratio check - compare current to normal
+            if (check.field.includes('approach_temp')) {
+              const normalTemp = data.approach_temp_normal_c;
+              if (typeof normalTemp === 'number' && normalTemp > 0) {
+                shouldApply = (fieldValue / normalTemp) > check.threshold;
+              }
+            } else if (check.field.includes('pressure_drop')) {
+              const normalDP = data.column_normal_pressure_drop_mbar;
+              if (typeof normalDP === 'number' && normalDP > 0) {
+                shouldApply = (fieldValue / normalDP) > check.threshold;
+              }
+            }
+          } else if (check.field.includes('operating_') && check.threshold < 1) {
+            // It's a pressure/temperature ratio check
+            const maxField = 'max_' + check.field;
+            const maxValue = data[maxField as keyof EquipmentData];
+            shouldApply = typeof maxValue === 'number' ? (fieldValue / maxValue) > check.threshold : false;
+          } else {
+            // Direct numeric comparison
+            shouldApply = fieldValue > check.threshold;
+          }
+        } else if (typeof fieldValue === 'string' && typeof check.threshold === 'number') {
+          // Handle date string comparisons (days since date)
+          if (check.field.includes('_date')) {
+            const daysSince = daysSinceDate(fieldValue);
+            shouldApply = daysSince > check.threshold;
+          }
+        }
+        break;
+      case 'lt':
+        if (typeof fieldValue === 'number' && typeof check.threshold === 'number') {
+          shouldApply = fieldValue < check.threshold;
+        }
+        break;
+      case 'eq':
+        // Handle string equality comparisons (seal condition, fouling level, etc.)
+        shouldApply = fieldValue === check.threshold;
+        break;
+      case 'true':
+        shouldApply = fieldValue === true;
+        break;
+    }
+    
+    if (shouldApply) {
+      deductions[check.category] = (deductions[check.category] || 0) + check.deduction;
+      issues.push(check.message);
+    }
+  }
+  
+  return { deductions, issues };
+}
+
+/**
  * Calculate criticality factor
+
  * Higher criticality = more conservative condition assessment
  */
 function calculateCriticalityFactor(data: EquipmentData): { factor: number; notes: string[] } {
@@ -300,21 +342,39 @@ function calculateEnvironmentScore(data: EquipmentData): { score: number; issues
 
 /**
  * Main function to calculate overall equipment condition
+ * Uses equipment-type-specific scoring weights and checks
  */
 export function calculateEquipmentCondition(data: EquipmentData): ConditionResult {
+  // Get equipment profile for type-specific configuration
+  const profile = getEquipmentProfile(data.equipment_type);
+  
   // Calculate individual scores
-  const physical = calculatePhysicalScore(data);
+  const physical = calculatePhysicalScore(data, profile);
   const maintenance = calculateMaintenanceScore(data);
   const operational = calculateOperationalScore(data);
   const environment = calculateEnvironmentScore(data);
   const criticality = calculateCriticalityFactor(data);
   
-  // Weight the scores (physical and maintenance are most important)
+  // Apply type-specific checks and get deductions by category
+  const typeSpecificChecks = applyTypeSpecificChecks(data, profile);
+  
+  let physicalScore = physical.score - (typeSpecificChecks.deductions['physical'] || 0);
+  let maintenanceScore = maintenance.score - (typeSpecificChecks.deductions['maintenance'] || 0);
+  let operationalScore = operational.score - (typeSpecificChecks.deductions['operational'] || 0);
+  let environmentScore = environment.score - (typeSpecificChecks.deductions['environment'] || 0);
+  
+  // Ensure scores stay in valid range
+  physicalScore = Math.max(0, Math.min(100, physicalScore));
+  maintenanceScore = Math.max(0, Math.min(100, maintenanceScore));
+  operationalScore = Math.max(0, Math.min(100, operationalScore));
+  environmentScore = Math.max(0, Math.min(100, environmentScore));
+  
+  // Weight the scores using equipment-type-specific weights
   const weightedScore = (
-    physical.score * 0.30 +
-    maintenance.score * 0.30 +
-    operational.score * 0.20 +
-    environment.score * 0.20
+    physicalScore * profile.scoringWeights.physical +
+    maintenanceScore * profile.scoringWeights.maintenance +
+    operationalScore * profile.scoringWeights.operational +
+    environmentScore * profile.scoringWeights.environment
   );
   
   // Apply criticality factor (reduces score for critical equipment)
@@ -323,10 +383,10 @@ export function calculateEquipmentCondition(data: EquipmentData): ConditionResul
   
   // Determine governing factor (lowest scoring area)
   const scores = [
-    { name: 'Physical Condition', score: physical.score },
-    { name: 'Maintenance Compliance', score: maintenance.score },
-    { name: 'Operational Stress', score: operational.score },
-    { name: 'Environmental Factors', score: environment.score },
+    { name: 'Physical Condition', score: physicalScore },
+    { name: 'Maintenance Compliance', score: maintenanceScore },
+    { name: 'Operational Stress', score: operationalScore },
+    { name: 'Environmental Factors', score: environmentScore },
   ];
   const governing = scores.reduce((min, curr) => curr.score < min.score ? curr : min);
   
@@ -336,6 +396,7 @@ export function calculateEquipmentCondition(data: EquipmentData): ConditionResul
     ...maintenance.issues,
     ...operational.issues,
     ...environment.issues,
+    ...typeSpecificChecks.issues,
     ...criticality.notes,
   ];
   
@@ -358,26 +419,29 @@ export function calculateEquipmentCondition(data: EquipmentData): ConditionResul
     condition_score: finalScore,
     governing_factor: governing.name,
     recommendations,
-    physical_score: physical.score,
+    physical_score: physicalScore,
     criticality_score: Math.round(100 / criticality.factor),
-    environment_score: environment.score,
-    maintenance_score: maintenance.score,
-    operational_score: operational.score,
+    environment_score: environmentScore,
+    maintenance_score: maintenanceScore,
+    operational_score: operationalScore,
   };
 }
 
 /**
  * Get default equipment data with reasonable values
+ * Uses equipment-type-specific defaults from profile
  */
 export function getDefaultEquipmentData(name: string, equipmentType: string): EquipmentData {
+  const profile = getEquipmentProfile(equipmentType);
+  
   return {
     name,
     equipment_type: equipmentType,
     capacity_utilization_percent: 60,
     operating_hours_per_day: 8,
     years_in_service: 0,
-    maintenance_frequency_days: 90,
-    inspection_frequency_days: 365,
+    maintenance_frequency_days: profile.defaultMaintenanceDays,
+    inspection_frequency_days: profile.defaultInspectionDays,
     maintenance_compliance_percent: 100,
     outstanding_work_orders: 0,
     physical_condition: 1,
