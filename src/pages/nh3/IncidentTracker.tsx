@@ -114,8 +114,8 @@ export default function IncidentTracker() {
   const [selectedRootCauses, setSelectedRootCauses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [equipmentFilter, setEquipmentFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [equipmentFilter, setEquipmentFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -204,8 +204,8 @@ export default function IncidentTracker() {
 
   // Analytics calculations
   const filteredIncidents = incidents.filter((i) => {
-    if (equipmentFilter && i.equipment !== equipmentFilter) return false;
-    if (typeFilter && i.incident_type !== typeFilter) return false;
+    if (equipmentFilter !== 'all' && i.equipment !== equipmentFilter) return false;
+    if (typeFilter !== 'all' && i.incident_type !== typeFilter) return false;
     return true;
   });
 
@@ -582,7 +582,7 @@ export default function IncidentTracker() {
                     <SelectValue placeholder="Filter by equipment" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Equipment</SelectItem>
+                    <SelectItem value="all">All Equipment</SelectItem>
                     {EQUIPMENT_OPTIONS.map((eq) => (
                       <SelectItem key={eq} value={eq}>
                         {eq}
@@ -595,7 +595,7 @@ export default function IncidentTracker() {
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="Near-miss">Near-miss</SelectItem>
                     <SelectItem value="Minor release">Minor release</SelectItem>
                     <SelectItem value="Major release">Major release</SelectItem>

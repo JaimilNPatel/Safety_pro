@@ -13,12 +13,11 @@ import Chemicals from "./pages/Chemicals";
 import Inspections from "./pages/Inspections";
 import NewInspection from "./pages/NewInspection";
 import InspectionDetail from "./pages/InspectionDetail";
-// DISABLED: NH3 Module - Work in Progress
-// import NH3Module from "./pages/NH3Module";
-// import DispersionCalculator from "./pages/nh3/DispersionCalculator";
-// import LopaEstimator from "./pages/nh3/LopaEstimator";
-// import NH3Checklists from "./pages/nh3/NH3Checklists";
-// import IncidentTracker from "./pages/nh3/IncidentTracker";
+import NH3Module from "./pages/NH3Module";
+import DispersionCalculator from "./pages/nh3/DispersionCalculator";
+import LopaEstimator from "./pages/nh3/LopaEstimator";
+import NH3Checklists from "./pages/nh3/NH3Checklists";
+import IncidentTracker from "./pages/nh3/IncidentTracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,7 +73,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* DISABLED: NH3 routes - Work in Progress
             <Route
               path="/nh3"
               element={
@@ -115,7 +113,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

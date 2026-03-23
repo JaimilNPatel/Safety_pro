@@ -230,7 +230,9 @@ export default function NH3Checklists() {
     const completed = checklist.reduce(
       (sum, cat) => sum + cat.items.filter((item) => item.result).length,
       0
+    );
 
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
   };
 
   const getCriticalFailures = () => {

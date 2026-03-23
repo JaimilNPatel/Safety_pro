@@ -2,97 +2,106 @@
 
 **Safety Inspection Assistant** - Comprehensive facility and equipment inspection management system.
 
-## Overview
+> **Complete Documentation:** For comprehensive project details, architecture, algorithms, setup instructions, and development guidelines, see [PROJECT_COMPLETE_DOCUMENTATION.md](PROJECT_COMPLETE_DOCUMENTATION.md)
 
-SafetyPro is a comprehensive web-based safety inspection and management platform designed to help organizations systematically track, manage, and improve their safety protocols across facilities and equipment.
-
-## Features
-
-- 🔐 Secure user authentication and role-based access control
-- 📋 Dynamic inspection checklists for different equipment categories
-- 🏭 Site and facility inventory management
-- 🧪 Chemical tracking and management
-- 📊 Risk assessment and prioritization algorithms
-- 📈 Inspection history and reporting
-- 🔔 Real-time alerts and notifications
-- 📱 Responsive design for desktop and mobile devices
-
-## Tech Stack
-
-- **Frontend Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Backend**: Supabase
-- **State Management**: React Query (TanStack Query)
-- **Form Handling**: React Hook Form
-- **Icons**: Lucide React
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
+- Node.js v16+ 
+- npm/yarn
 
 ### Installation
-
 ```bash
-# Install dependencies
 npm install
-
-# Start the development server
-npm start
-# or
 npm run dev
 ```
-
-The application will be available at `http://localhost:8080/`
+App runs at `http://localhost:5173`
 
 ### Build for Production
-
 ```bash
 npm run build
 ```
 
-### Preview Production Build
+## What is SafetyPro?
 
-```bash
-npm run preview
-```
+SafetyPro is an enterprise-grade web-based safety inspection and risk management platform that helps organizations:
+
+- **Conduct systematic equipment inspections** using dynamic, equipment-type-specific checklists
+- **Assess chemical hazards** using industry-standard methodologies (Dow F&EI, Toxic Load Analysis)
+- **Evaluate equipment condition** with multi-factor scoring algorithms
+- **Manage NH₃ (ammonia) safety** with specialized dispersion modeling, LOPA/SIL analysis, and incident tracking
+- **Track inspection history** and generate audit-ready reports
+- **Identify risk hotspots** through prioritization algorithms
+
+## Key Features
+
+- 🔐 Secure authentication with role-based access control
+- 📋 Dynamic equipment-type-specific inspection checklists  
+- 🏭 Multi-facility inventory management
+- 🧪 Chemical hazard assessment (Dow F&EI, Toxic Load)
+- 📊 Industry-standard risk assessment algorithms
+- 🔬 Ammonia (NH₃) safety module with dispersion modeling & LOPA analysis
+- 📈 Historical tracking and trend analysis
+- 📱 Responsive design for desktop/mobile/tablet
+
+## Tech Stack
+
+**Frontend:** React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui  
+**Backend:** Supabase (PostgreSQL, Auth, RLS)  
+**APIs:** React Query, React Hook Form, Recharts  
+**Deployment:** Vercel/Netlify ready
 
 ## Project Structure
 
 ```
 src/
-├── components/        # Reusable React components
-├── pages/            # Page components for routing
-├── hooks/            # Custom React hooks
-├── lib/              # Utility functions and helper libraries
-├── integrations/     # External service integrations (Supabase)
-└── main.tsx          # Application entry point
+├── components/       # React components + shadcn/ui
+├── pages/           # Page-level components (Dashboard, Inspections, etc.)
+├── hooks/           # Custom React hooks (useAuth, useToast)
+├── lib/             # Business logic (equipmentCondition, riskCalculations)
+└── integrations/    # Supabase client & types
 ```
 
-## Key Pages
+## Database
 
-- **Login** - User authentication
-- **Register** - New user registration
-- **Dashboard** - Main application dashboard with inspection overview
-- **Inspections** - List and manage inspections
-- **New Inspection** - Create a new inspection
-- **Chemicals** - Chemical inventory management
-- **Sites** - Facility and site management
+PostgreSQL via Supabase with Row-Level Security (RLS) for multi-tenant access control. Tables include:
+- Users (via Supabase Auth)
+- Equipment & Inspections
+- Chemicals & Risk Assessments
+- NH₃ Module: LOPA scenarios, checklists, incidents
 
-## Authentication
+## Scripts
 
-SafetyPro uses Supabase for authentication. Users can:
-- Create a new account via the registration page
-- Log in with their email and password
-- Access authenticated pages only when logged in
+```bash
+npm run dev          # Start development server
+npm run build        # Production build
+npm run lint         # Run ESLint
+npm run test         # Run tests (Vitest)
+npm run test:watch   # Tests in watch mode
+npm run preview      # Preview production build
+```
 
-## Contributing
+## Algorithms Implemented
 
-For contributing guidelines, please refer to the project documentation.
+| Algorithm | Purpose | Standard |
+|-----------|---------|----------|
+| **4-Factor Condition Scoring** | Equipment condition assessment | Custom (equipment-type specific) |
+| **Dow Fire & Explosion Index** | Chemical hazard quantification | AIChE (1994) |
+| **Toxic Load Analysis** | Inhalation hazard evaluation | NIOSH/OSHA |
+| **Gaussian Dispersion Modeling** | Toxic release simulation | EPA ALOHA equivalent |
+| **LOPA/SIL Analysis** | Layer of protection quantification | IEC 61511 |
+
+## Documentation
+
+📚 **[PROJECT_COMPLETE_DOCUMENTATION.md](PROJECT_COMPLETE_DOCUMENTATION.md)** - Complete reference with:
+- Detailed feature descriptions
+- Algorithm documentation with formulas
+- API endpoints and integration patterns
+- Database schema with RLS policies
+- Installation & deployment guides
+- Development workflow & best practices
+- Performance optimization strategies
+- Future roadmap and scalability plans
 
 ## License
 
@@ -100,4 +109,4 @@ Proprietary - SafetyPro Project
 
 ## Support
 
-For support or inquiries, please contact the development team.
+For issues, feature requests, or support: [GitHub Issues] or contact the development team.
