@@ -1,0 +1,80 @@
+[
+  {
+    "table": "chemicals",
+    "count": 118,
+    "status": "ok"
+  },
+  {
+    "table": "profiles",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "sites",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "site_chemicals",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "site_equipment",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "inspections",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "inspection_chemicals",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "inspection_equipment",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "inspection_notes",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "generated_checklist",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "routine_checklist",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "risk_findings",
+    "count": 0,
+    "status": "ok"
+  },
+  {
+    "table": "nh3_incidents",
+    "count": 0,
+    "status": "error",
+    "message": "nh3_incidents: Could not find the table 'public.nh3_incidents' in the schema cache"
+  },
+  {
+    "table": "nh3_lopa_scenarios",
+    "count": 0,
+    "status": "error",
+    "message": "nh3_lopa_scenarios: Could not find the table 'public.nh3_lopa_scenarios' in the schema cache"
+  },
+  {
+    "table": "nh3_checklist_results",
+    "count": 0,
+    "status": "error",
+    "message": "nh3_checklist_results: Could not find the table 'public.nh3_checklist_results' in the schema cache"
+  }
+]

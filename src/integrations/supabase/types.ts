@@ -694,6 +694,135 @@ export type Database = {
         }
         Relationships: []
       }
+      nh3_incidents: {
+        Row: {
+          id: string
+          incident_type: string | null
+          equipment: string | null
+          failure_mode: string | null
+          description: string | null
+          immediate_cause: string | null
+          root_causes: Json | null
+          safeguards_worked: string | null
+          safeguards_failed: string | null
+          corrective_actions: Json | null
+          severity: number | null
+          reported_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          incident_type?: string | null
+          equipment?: string | null
+          failure_mode?: string | null
+          description?: string | null
+          immediate_cause?: string | null
+          root_causes?: Json | null
+          safeguards_worked?: string | null
+          safeguards_failed?: string | null
+          corrective_actions?: Json | null
+          severity?: number | null
+          reported_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          incident_type?: string | null
+          equipment?: string | null
+          failure_mode?: string | null
+          description?: string | null
+          immediate_cause?: string | null
+          root_causes?: Json | null
+          safeguards_worked?: string | null
+          safeguards_failed?: string | null
+          corrective_actions?: Json | null
+          severity?: number | null
+          reported_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      nh3_lopa_scenarios: {
+        Row: {
+          id: string
+          name: string
+          equipment_tag: string | null
+          initiating_event: string | null
+          initiating_freq: number | null
+          consequence: string | null
+          target_freq: number | null
+          selected_layers: Json | null
+          mitigated_freq: number | null
+          rrf: number | null
+          sil_required: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          equipment_tag?: string | null
+          initiating_event?: string | null
+          initiating_freq?: number | null
+          consequence?: string | null
+          target_freq?: number | null
+          selected_layers?: Json | null
+          mitigated_freq?: number | null
+          rrf?: number | null
+          sil_required?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          equipment_tag?: string | null
+          initiating_event?: string | null
+          initiating_freq?: number | null
+          consequence?: string | null
+          target_freq?: number | null
+          selected_layers?: Json | null
+          mitigated_freq?: number | null
+          rrf?: number | null
+          sil_required?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      nh3_checklist_results: {
+        Row: {
+          id: string
+          equipment_category: string
+          inspector_id: string | null
+          inspection_date: string
+          items: Json
+          critical_failures: number
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          equipment_category: string
+          inspector_id?: string | null
+          inspection_date: string
+          items: Json
+          critical_failures?: number
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          equipment_category?: string
+          inspector_id?: string | null
+          inspection_date?: string
+          items?: Json
+          critical_failures?: number
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

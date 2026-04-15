@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Plus, Loader2, AlertTriangle } from 'lucide-react';
+import { incidentStorage } from '@/lib/incidentStorage';
+import { ArrowLeft, Plus, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -92,7 +92,7 @@ const FAILURE_MODES = [
 ];
 
 export default function IncidentTracker() {
-  const { register, handleSubmit, watch, reset } = useForm<FormData>({
+  const { register, handleSubmit, watch, reset, control } = useForm<FormData>({
     defaultValues: {
       dateTime: new Date().toISOString().slice(0, 16),
       incidentType: 'Near-miss',
@@ -125,13 +125,12 @@ export default function IncidentTracker() {
 
   const fetchIncidents = async () => {
     setLoading(true);
-    // @ts-ignore
-    const { data, error } = await supabase.from('nh3_incidents').select('*').order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const data = incidentStorage.getAll();
+      setIncidents(data as unknown as Incident[]);
+    } catch (error) {
+      console.error('Error fetching incidents:', error);
       toast({ title: 'Error', description: 'Failed to fetch incidents', variant: 'destructive' });
-    } else {
-      setIncidents((data || []) as unknown as Incident[]);
     }
     setLoading(false);
   };
@@ -148,9 +147,9 @@ export default function IncidentTracker() {
 
     setSubmitting(true);
 
-    // @ts-ignore - Table types will be available after migration is applied and types are regenerated
-    const { error } = await supabase.from('nh3_incidents').insert([
-      {
+    try {
+      // Save to local storage
+      incidentStorage.add({
         incident_type: data.incidentType,
         equipment: data.equipment,
         failure_mode: data.failureMode,
@@ -161,20 +160,23 @@ export default function IncidentTracker() {
         safeguards_failed: data.safeguardsFailed,
         corrective_actions: correctiveActions.filter((a) => a.action),
         severity: data.severity,
-      },
-    ]);
+      });
 
-    setSubmitting(false);
-
-    if (error) {
-      toast({ title: 'Error', description: 'Failed to submit incident', variant: 'destructive' });
-    } else {
+      setSubmitting(false);
       toast({ title: 'Success', description: 'Incident logged successfully' });
       reset();
       setCorrectiveActions([{ action: '', dueDate: '', owner: '' }]);
       setSelectedRootCauses([]);
       setShowForm(false);
       fetchIncidents();
+    } catch (err) {
+      setSubmitting(false);
+      console.error('Submission error:', err);
+      toast({
+        title: 'Error',
+        description: `Failed to submit incident: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -200,6 +202,12 @@ export default function IncidentTracker() {
     setSelectedRootCauses((prev) =>
       prev.includes(cause) ? prev.filter((c) => c !== cause) : [...prev, cause]
     );
+  };
+
+  const handleDeleteIncident = (id: string) => {
+    incidentStorage.delete(id);
+    fetchIncidents();
+    toast({ title: 'Success', description: 'Incident deleted' });
   };
 
   // Analytics calculations
@@ -291,53 +299,71 @@ export default function IncidentTracker() {
                   {/* Incident Type */}
                   <div className="space-y-2">
                     <Label htmlFor="incidentType">Incident Type *</Label>
-                    <Select defaultValue="Near-miss">
-                      <SelectTrigger id="incidentType">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Near-miss">Near-miss</SelectItem>
-                        <SelectItem value="Minor release">Minor release</SelectItem>
-                        <SelectItem value="Major release">Major release</SelectItem>
-                        <SelectItem value="Fire/explosion">Fire/explosion</SelectItem>
-                        <SelectItem value="Injury">Injury</SelectItem>
-                        <SelectItem value="Equipment failure">Equipment failure</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="incidentType"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="incidentType">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Near-miss">Near-miss</SelectItem>
+                            <SelectItem value="Minor release">Minor release</SelectItem>
+                            <SelectItem value="Major release">Major release</SelectItem>
+                            <SelectItem value="Fire/explosion">Fire/explosion</SelectItem>
+                            <SelectItem value="Injury">Injury</SelectItem>
+                            <SelectItem value="Equipment failure">Equipment failure</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
 
                   {/* Equipment */}
                   <div className="space-y-2">
                     <Label htmlFor="equipment">Equipment Involved *</Label>
-                    <Select defaultValue="Synthesis reactor">
-                      <SelectTrigger id="equipment">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {EQUIPMENT_OPTIONS.map((eq) => (
-                          <SelectItem key={eq} value={eq}>
-                            {eq}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="equipment"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="equipment">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {EQUIPMENT_OPTIONS.map((eq) => (
+                              <SelectItem key={eq} value={eq}>
+                                {eq}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
 
                   {/* Failure Mode */}
                   <div className="space-y-2">
                     <Label htmlFor="failureMode">Failure Mode *</Label>
-                    <Select defaultValue="Mechanical">
-                      <SelectTrigger id="failureMode">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FAILURE_MODES.map((fm) => (
-                          <SelectItem key={fm} value={fm}>
-                            {fm}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="failureMode"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger id="failureMode">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FAILURE_MODES.map((fm) => (
+                              <SelectItem key={fm} value={fm}>
+                                {fm}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
 
                   {/* Severity */}
@@ -639,10 +665,18 @@ export default function IncidentTracker() {
                           ))}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-2">
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(incident.created_at), 'MMM d, yyyy')}
                         </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteIncident(incident.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus, 
+  Activity,
   Search, 
   Building2, 
   FileText, 
@@ -138,10 +139,10 @@ export default function Dashboard() {
             </p>
           </div>
           <Button asChild size="lg" className="gap-2">
-            <Link to="/inspection/new">
-              <Plus className="h-5 w-5" />
-              Start Inspection
-            </Link>
+              <Link to="/inspection/new">
+                <Plus className="h-5 w-5" />
+                Start Inspection
+              </Link>
           </Button>
         </div>
 
@@ -286,6 +287,12 @@ export default function Dashboard() {
                   <Link to="/reports">
                     <FileText className="h-6 w-6" />
                     <span>Reports</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="h-auto flex-col gap-2 p-6 border-primary/30 hover:bg-primary/5">
+                  <Link to="/sensor-bridge">
+                    <Activity className="h-6 w-6 text-primary" />
+                    <span className="text-primary font-semibold">Sensor Bridge</span>
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="h-auto flex-col gap-2 p-6 border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20">

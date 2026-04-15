@@ -11,6 +11,9 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Chemicals from "./pages/Chemicals";
 import Inspections from "./pages/Inspections";
+import Sites from "./pages/Sites";
+import Reports from "./pages/Reports";
+import SensorBridge from "./pages/SensorBridge";
 import NewInspection from "./pages/NewInspection";
 import InspectionDetail from "./pages/InspectionDetail";
 import NH3Module from "./pages/NH3Module";
@@ -54,6 +57,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Inspections />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sites"
+              element={
+                <ProtectedRoute>
+                  <Sites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sensor-bridge"
+              element={
+                <ProtectedRoute>
+                  <SensorBridge />
                 </ProtectedRoute>
               }
             />

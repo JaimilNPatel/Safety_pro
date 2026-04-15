@@ -252,6 +252,59 @@ export default function NH3Checklists() {
     );
   };
 
+  const getReadinessScore = () => {
+    const totalItems = checklist.reduce((sum, cat) => sum + cat.items.length, 0);
+    const completedItems = checklist.reduce(
+      (sum, cat) => sum + cat.items.filter((item) => item.result).length,
+      0
+    );
+    const failedCriticals = getCriticalFailures();
+
+    const completionScore = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+    const penalty = failedCriticals * 18;
+
+    return Math.max(0, Math.min(100, Math.round(completionScore - penalty)));
+  };
+
+  const getInspectionFocus = () => {
+    const activeCategory = checklist.find((c) => c.id === activeTab);
+    if (!activeCategory) return [];
+
+    const focusHints = [
+      {
+        match: /detector|gas/i,
+        title: 'Verify NH₃ detection and alarm proof tests',
+        description: 'Modern ammonia plants rely on calibrated fixed detectors and confirmed alarm response, not just visual rounds.',
+      },
+      {
+        match: /relief|vent|vacuum/i,
+        title: 'Check relief and vent readiness',
+        description: 'Relief valves, vents, and downstream discharge paths should be current and free of blockage.',
+      },
+      {
+        match: /vibration|compressor|alignment|bearing/i,
+        title: 'Review mechanical health trending',
+        description: 'Condition-based inspection should catch compressor drift, bearing heat, and vibration changes early.',
+      },
+      {
+        match: /pressure|temperature|drift|profile/i,
+        title: 'Compare live readings with baseline trend',
+        description: 'Modern inspection uses historian and SCADA snapshots to spot drifting equipment before failure.',
+      },
+      {
+        match: /corrosion|thickness|weld|settlement/i,
+        title: 'Confirm asset integrity findings',
+        description: 'Thickness, settlement, and weld checks remain critical for storage tanks and pressure equipment.',
+      },
+    ];
+
+    const matched = focusHints.filter((hint) =>
+      activeCategory.items.some((item) => hint.match.test(item.item))
+    );
+
+    return matched.slice(0, 3);
+  };
+
   const handleSubmitInspection = async () => {
     const criticalFailures = getCriticalFailures();
 
@@ -337,6 +390,68 @@ export default function NH3Checklists() {
             </CardContent>
           </Card>
         )}
+
+        {/* Modern Inspection Readiness */}
+        <Card className="mb-6 border-amber-200 bg-amber-50/70 dark:border-amber-800 dark:bg-amber-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-900 dark:text-amber-100">
+              Modern Inspection Readiness
+            </CardTitle>
+            <CardDescription className="text-amber-800 dark:text-amber-200">
+              A practical NH₃ check focuses on detector health, relief readiness, and condition-based trends, not only manual observation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-lg border border-amber-200 bg-white/80 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Readiness score</p>
+              <p className="mt-1 text-3xl font-bold text-amber-950 dark:text-amber-50">{getReadinessScore()}%</p>
+              <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                Completion minus penalties for failed critical safeguards.
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-white/80 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Current focus</p>
+              <p className="mt-1 text-sm font-semibold text-amber-950 dark:text-amber-50">
+                {criticalFailures > 0 ? 'Correct critical failures first' : 'Close out remaining inspection items'}
+              </p>
+              <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                Safety-critical items should drive immediate action, not wait for the full inspection cycle.
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-white/80 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Modern checks</p>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                Detectors, interlocks, relief valves, vibration baselines, and trend drift are the most useful priorities.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category Focus */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Inspection Focus for This Section</CardTitle>
+            <CardDescription>
+              These are the most useful modern NH₃ checks for the currently selected equipment group.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-3">
+              {getInspectionFocus().length > 0 ? (
+                getInspectionFocus().map((focus) => (
+                  <div key={focus.title} className="rounded-lg border p-4">
+                    <p className="font-semibold text-foreground">{focus.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{focus.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border p-4 text-sm text-muted-foreground md:col-span-3">
+                  Complete a few items to see the most relevant focus areas for this category.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Progress Bar */}
         <Card className="mb-6">

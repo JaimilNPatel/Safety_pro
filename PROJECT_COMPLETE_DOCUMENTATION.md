@@ -83,6 +83,23 @@ SafetyPro is a specialized safety inspection and risk management assistant that 
 - **Multi-Factor Condition Scoring:** Evaluates physical condition, maintenance history, operational parameters, and environmental factors with equipment-specific weightings
 - **Ammonia Safety Module:** Specialized tools for NH₃ facilities including Gaussian dispersion modeling, LOPA/SIL analysis, and incident tracking
 - **Scalable Architecture:** Built on Supabase for enterprise deployment and multi-tenant capability
+- **Sensor-Aware Workflow:** Can sit alongside SCADA/historian systems to compare live readings with inspection baselines, flag drift, and turn alarms into safety actions without replacing control systems
+
+### How It Works In Sensor-Based Plants
+
+If a facility already has sensors, SafetyPro is used as the interpretation and action layer rather than the control layer.
+
+1. SCADA, DCS, PLCs, or a historian collect live process data
+2. SafetyPro receives the data through an API, import, or connector
+3. The platform maps readings to the correct equipment record and inspection history
+4. It compares the live value to the last inspection baseline or expected range
+5. If the reading is abnormal, SafetyPro creates a review item, risk flag, or follow-up inspection task
+
+This allows the app to add value even when the plant is already heavily instrumented:
+- It validates whether live sensor behavior matches inspection findings
+- It turns raw readings into safety context and maintenance priorities
+- It keeps compliance and inspection records separate from control logic
+- It helps supervisors act on the data instead of just watching the data
 
 ---
 

@@ -33,6 +33,27 @@ SafetyPro is an enterprise-grade web-based safety inspection and risk management
 - **Track inspection history** and generate audit-ready reports
 - **Identify risk hotspots** through prioritization algorithms
 
+## How It Fits In A Sensor-Based Plant
+
+SafetyPro does not replace SCADA, DCS, PLCs, or historians. It sits above them as the safety and inspection layer.
+
+- **SCADA tells you what the plant is doing now**: live temperature, pressure, vibration, alarms, and interlocks.
+- **SafetyPro tells you what that means for safety**: which asset needs inspection, what the risk level is, and what action should happen next.
+
+In a sensor-heavy site, SafetyPro can be used to:
+
+- Compare live readings against the last inspection result or baseline
+- Flag drift, abnormal trends, or overdue calibration for review
+- Turn sensor alarms into inspection tasks and corrective actions
+- Keep manual inspection findings, chemical risk scores, and compliance records in one place
+
+Typical integration flow:
+
+1. Sensor or SCADA system collects the live data
+2. Data is sent or uploaded into SafetyPro through an API, CSV import, or connector
+3. SafetyPro correlates the reading with the equipment record and inspection history
+4. The system highlights risk, generates follow-up work, and supports audit reporting
+
 ## Key Features
 
 - 🔐 Secure authentication with role-based access control
@@ -75,11 +96,28 @@ PostgreSQL via Supabase with Row-Level Security (RLS) for multi-tenant access co
 ```bash
 npm run dev          # Start development server
 npm run build        # Production build
+npm run export:csv   # Export dashboard tables to CSV files
 npm run lint         # Run ESLint
 npm run test         # Run tests (Vitest)
 npm run test:watch   # Tests in watch mode
 npm run preview      # Preview production build
 ```
+
+## Export Dashboard Data to CSV
+
+Use this to export dashboard-related data (including chemicals) into CSV files.
+
+1. Set environment variables:
+	- `VITE_SUPABASE_URL` (or `SUPABASE_URL`)
+	- `SUPABASE_SERVICE_ROLE_KEY` (recommended for full export)
+	  - You can also use `VITE_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY`, but results may be limited by RLS.
+2. Run:
+	```bash
+	npm run export:csv
+	```
+3. Output is written to:
+	- `exports/csv-YYYY-MM-DD-HH-MM-SS/`
+	- One CSV per table plus `export-summary.json`
 
 ## Algorithms Implemented
 

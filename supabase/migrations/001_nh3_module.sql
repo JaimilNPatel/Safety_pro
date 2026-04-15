@@ -49,6 +49,17 @@ alter table nh3_checklist_results enable row level security;
 alter table nh3_incidents enable row level security;
 
 -- Create RLS Policies
-create policy "authenticated users full access" on nh3_lopa_scenarios for all using (auth.role() = 'authenticated');
-create policy "authenticated users full access" on nh3_checklist_results for all using (auth.role() = 'authenticated');
-create policy "authenticated users full access" on nh3_incidents for all using (auth.role() = 'authenticated');
+create policy "authenticated users full access" on nh3_lopa_scenarios 
+  for all 
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
+
+create policy "authenticated users full access" on nh3_checklist_results 
+  for all 
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
+
+create policy "authenticated users full access" on nh3_incidents 
+  for all 
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
